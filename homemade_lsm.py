@@ -37,6 +37,10 @@ def generate_lorenz_data(num_steps, dt=0.1, sigma=10.0, rho=28.0, beta=8.0/3.0, 
 
     return sol.y.T  # Transpose to get shape (num_steps, 3)
 
+def generate_sinusoid(num_steps, dt=0.1, freq=1.0, amplitude=1.0, phase=0.0):
+    t = np.arange(0, num_steps * dt, dt)
+    return amplitude * np.sin(2 * np.pi * freq * t + phase)
+
 if __name__ == '__main__':
     # parameter
     T = 1000  # total data length
@@ -49,26 +53,42 @@ if __name__ == '__main__':
 
     # Lorentz data generation with random initial value        
     data = generate_lorenz_data(num_steps, dt)
+    data_sinusoid = generate_sinusoid(num_steps, dt, freq=0.1, amplitude=1.0, phase=0.0)
     # training and test
     train_U = data[:int(T_train/dt)]
     train_D = data[1:int(T_train/dt)+1]
+
+    train_U_sinusoid = data_sinusoid[:int(T_train/dt)]
+    train_D_sinusoid = data_sinusoid[1:int(T_train/dt)+1]
     
     test_U = data[int(T_train/dt):int((T_train+T_test)/dt)]
     test_D = data[1+int(T_train/dt):int((T_train+T_test)/dt)+1]
+
+    test_U_sinusoid = data_sinusoid[int(T_train/dt):int((T_train+T_test)/dt)]
+    test_D_sinusoid = data_sinusoid[1+int(T_train/dt):int((T_train+T_test)/dt)]
     
     # LSM model
-    lsm = lsm.LiquidStateMachine(input_dim=3, reservoir_size=300, spectral_radius=spectral_radius, sparsity=sparsity)
-    
+    lsm_lorenz = lsm.LiquidStateMachine(input_dim=3, reservoir_size=300, spectral_radius=spectral_radius, sparsity=sparsity)
+    lsm_sinusoid = lsm.LiquidStateMachine(input_dim=1, reservoir_size=300, spectral_radius=spectral_radius, sparsity=sparsity)
+
     # get reservoir state
-    reservoir_states_train = lsm.get_states(train_U)
-    reservoir_states_test = lsm.get_states(test_U)
+    reservoir_states_train = lsm_lorenz.get_states(train_U)
+    reservoir_states_test = lsm_lorenz.get_states(test_U)
+
+    reservoir_states_train_sinusoid = lsm_sinusoid.get_states(train_U_sinusoid)
+    reservoir_states_test_sinusoid = lsm_sinusoid.get_states(train_D_sinusoid)
+
     
     # traning read out layer with ridge regression
     ridge_reg = Ridge(alpha=1e-4)
     ridge_reg.fit(reservoir_states_train, train_D)
     
+    ridge_reg_sinusoid = Ridge(alpha=5)
+    ridge_reg_sinusoid.fit(reservoir_states_train_sinusoid, train_D_sinusoid)
+
     # predicting test data
     test_Y = ridge_reg.predict(reservoir_states_test)
+    test_Y_sinusoid = ridge_reg_sinusoid.predict(reservoir_states_test_sinusoid)
         
     plt.figure(figsize=(14, 10))
     plt.plot(test_U[:1000, 0], label='True X')
@@ -80,5 +100,14 @@ if __name__ == '__main__':
     
     plt.tight_layout()
     plt.savefig("time_series_predictions_240730.pdf")
+
+
+    plt.figure(figsize=(14, 10))
+    plt.plot(test_U_sinusoid[:1000], label='True Sinusoid')
+    plt.plot(test_Y_sinusoid[:1000], label=f'Predicted Sinusoid (Spectral Radius={spectral_radius})')
+    plt.legend()
+    plt.xlabel('Time steps')
+    plt.ylabel('Amplitude')
+    plt.title(f'Sinusoid Prediction (Spectral Radius={spectral_radius})')
     plt.show()
 

@@ -33,6 +33,8 @@ class LiquidStateMachine:
         return W
 
     def step(self, input_vector):
+        if self.input_dim == 1:
+            input_vector = input_vector.reshape(-1)
         I = np.dot(self.W_in, input_vector) + np.dot(self.W_res, self.spikes)
         dv = (I - self.v) / self.tau
         self.v += dv * self.dt
