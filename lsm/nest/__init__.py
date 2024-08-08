@@ -22,7 +22,7 @@ def create_iaf_psc_exp(n_E, n_I):
     return nodes[:n_E], nodes[n_E:]
 
 
-def connect_tsodyks(nodes_E, nodes_I):
+def connect_tsodyks(nodes_E, nodes_I, spectral_radius=0.9):
     f0 = 10.0
 
     delay = dict(distribution='normal_clipped', mu=10., sigma=20., low=3., high=200.)
@@ -64,6 +64,25 @@ def connect_tsodyks(nodes_E, nodes_I):
     connect(nodes_I, nodes_E, J_IE, n_syn_inh, gen_syn_param(tau_psc=2.0, tau_fac=376.0, tau_rec=45., U=0.016))
     connect(nodes_I, nodes_I, J_II, n_syn_inh, gen_syn_param(tau_psc=2.0, tau_fac=21.0, tau_rec=706., U=0.25))
 
+    conn = nest.GetConnections(source=nodes_E + nodes_I, target=nodes_E + nodes_I)
+    weights = nest.GetStatus(conn, keys="weight")
+
+    # Create the weight matrix W
+    W = np.zeros((len(nodes_E) + len(nodes_I), len(nodes_E) + len(nodes_I)))
+    for c, w in zip(conn, weights):
+        src = c[0] - nodes_E[0]
+        trg = c[1] - nodes_E[0]
+        W[src, trg] = w
+
+    # Calculate eigenvalues and normalize the spectral radius
+    eigenvalues = np.linalg.eigvals(W)
+    max_eigenvalue = np.max(np.abs(eigenvalues))
+    W *= spectral_radius / max_eigenvalue
+
+    # Update the weights in the NEST model
+    for c, w in zip(conn, W.flatten()):
+        nest.SetStatus([c], {'weight': w})
+
 
 def inject_noise(nodes_E, nodes_I):
     p_rate = 25.0  # this is used to simulate input from neurons around the populations
@@ -85,11 +104,11 @@ def inject_noise(nodes_E, nodes_I):
 
 
 class LSM(object):
-    def __init__(self, n_exc, n_inh, n_rec,
+    def __init__(self, n_exc, n_inh, n_rec, spectral_radius=0.9,
                  create=create_iaf_psc_exp, connect=connect_tsodyks, inject_noise=inject_noise):
 
         neurons_exc, neurons_inh = create(n_exc, n_inh)
-        connect(neurons_exc, neurons_inh)
+        connect(neurons_exc, neurons_inh, spectral_radius)
         inject_noise(neurons_exc, neurons_inh)
 
         self.exc_nodes = neurons_exc

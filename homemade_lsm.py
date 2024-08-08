@@ -5,6 +5,8 @@ import pandas as pd
 import os
 from scipy.integrate import solve_ivp
 import pyLSM as lsm
+from reservoirpy.datasets import lorenz
+from datetime import datetime
 
 
 np.random.seed(seed=42)
@@ -49,10 +51,11 @@ if __name__ == '__main__':
     num_steps = int(T/dt)
 
     spectral_radius = 0.90
-    sparsity = 0.99
+    sparsity = 0.1
 
     # Lorentz data generation with random initial value        
-    data = generate_lorenz_data(num_steps, dt)
+    # data = generate_lorenz_data(num_steps, dt)
+    data = lorenz(num_steps)
     data_sinusoid = generate_sinusoid(num_steps, dt, freq=0.1, amplitude=1.0, phase=0.0)
     # training and test
     train_U = data[:int(T_train/dt)]
@@ -91,20 +94,37 @@ if __name__ == '__main__':
     test_Y_sinusoid = ridge_reg_sinusoid.predict(reservoir_states_test_sinusoid)
         
     plt.figure(figsize=(14, 10))
-    plt.plot(test_U[:1000, 0], label='True X')
-    plt.plot(test_Y[:1000, 0], label=f'Predicted X (Spectral Radius={spectral_radius})')
+    abscissa = 2000
+    plt.subplot(3, 1, 1)
+    plt.plot(test_Y[:abscissa, 0], label=f'Predicted X (Spectral Radius={spectral_radius})')
+    plt.plot(test_U[:abscissa, 0], label='True X')
     plt.legend()
+    plt.title(f'Time Series Prediction (Spectral Radius={spectral_radius} & Sparse={sparsity})')
     plt.xlabel('Time steps')
     plt.ylabel('X')
-    plt.title(f'Time Series Prediction (Spectral Radius={spectral_radius})')
+    plt.subplot(3, 1, 2)
+    plt.plot(test_Y[:abscissa, 1], label=f'Predicted Y (Spectral Radius={spectral_radius})')
+    plt.plot(test_U[:abscissa, 1], label='True Y')
+    plt.legend()
+    plt.xlabel('Time steps')
+    plt.ylabel('Y')
+    plt.subplot(3, 1, 3)
+    plt.plot(test_Y[:abscissa, 2], label=f'Predicted Z (Spectral Radius={spectral_radius})')
+    plt.plot(test_U[:abscissa, 2], label='True Z')
+    plt.legend()
+    plt.xlabel('Time steps')
+    plt.ylabel('Z')
+
+
+    
     
     plt.tight_layout()
-    plt.savefig("time_series_predictions_240730.pdf")
-
+    date_of_today = datetime.now().strftime('%Y%m%d_%H%M')
+    plt.savefig(f"curves/homemade_x_y_z/time_series_predictions_{date_of_today}.png")
 
     plt.figure(figsize=(14, 10))
-    plt.plot(test_U_sinusoid[:1000], label='True Sinusoid')
-    plt.plot(test_Y_sinusoid[:1000], label=f'Predicted Sinusoid (Spectral Radius={spectral_radius})')
+    plt.plot(test_Y_sinusoid, label=f'Predicted Sinusoid (Spectral Radius={spectral_radius})')
+    plt.plot(test_U_sinusoid, label='True Sinusoid')
     plt.legend()
     plt.xlabel('Time steps')
     plt.ylabel('Amplitude')

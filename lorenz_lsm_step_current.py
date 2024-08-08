@@ -9,6 +9,8 @@ import nest.raster_plot
 from lsm.nest import LSM
 import pandas as pd
 import os
+from reservoirpy.datasets import lorenz
+from datetime import datetime
 '''
 lsm with wolfgang
 '''
@@ -120,6 +122,7 @@ if __name__ == '__main__':
     t_eval = np.linspace(*t_span, sim_time)
 
     x, y, z = generate_lorenz_data(sim_time,t_span, t_eval )
+    # x, y, z = lorenz(sim_time).T
     print("x shape is : ", x.shape)
 
     # 正規化
@@ -129,7 +132,8 @@ if __name__ == '__main__':
     z_normalized = scaler.fit_transform(z.reshape(-1, 1)).reshape(-1)
 
     # シミュレート
-    model = LSM(n_exc=n_exc, n_inh=n_inh, n_rec=n_rec)
+    spectral_radius = 1.0
+    model = LSM(n_exc=n_exc, n_inh=n_inh, n_rec=n_rec, spectral_radius=spectral_radius)
 
     num_neurons = len(model.exc_nodes)
     neurons_per_component = num_neurons // 3
@@ -172,29 +176,30 @@ if __name__ == '__main__':
     smoothed_predictions_ridge_y = moving_average(predictions_y, window_size)
     smoothed_test_targets_y = moving_average(test_targets_y, window_size)
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(1, 1, 1)
-    ax1.plot(t_eval[int(T_train):], predictions_x, linestyle=':', label='Ridge')
-    ax1.plot(t_eval[int(T_train):], x_normalized[int(T_train):], linestyle='--', label= 'target')
-    ax1.plot(t_eval[int(T_train):int(T_train)+len(smoothed_predictions_ridge)], smoothed_predictions_ridge,'r' ,linestyle='solid', label='Ridge Smoothed')
+    fig = plt.figure(figsize=(14, 10))
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax1.plot(t_eval[int(T_train):], predictions_x, linestyle=':', label='Prediction X')
+    ax1.plot(t_eval[int(T_train):], x_normalized[int(T_train):], label= 'Target X')
+    ax1.plot(t_eval[int(T_train):int(T_train)+len(smoothed_predictions_ridge)], smoothed_predictions_ridge,'r' ,linestyle='solid', label='Prediction X Smoothed')
     plt.legend()
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(1, 1, 1)
-    ax1.plot(t_eval[int(T_train):], predictions_y, linestyle=':', label='Ridge')
-    ax1.plot(t_eval[int(T_train):], y_normalized[int(T_train):], linestyle='--', label= 'target')
-    ax1.plot(t_eval[int(T_train):int(T_train)+len(smoothed_predictions_ridge_y)], smoothed_predictions_ridge_y, 'r', linestyle='solid', label='Ridge Smoothed')
+    ax2 = fig.add_subplot(3, 1, 2)
+    ax2.plot(t_eval[int(T_train):], predictions_y, linestyle=':', label='Prediction Y')
+    ax2.plot(t_eval[int(T_train):], y_normalized[int(T_train):], label= 'Target Y')
+    ax2.plot(t_eval[int(T_train):int(T_train)+len(smoothed_predictions_ridge_y)], smoothed_predictions_ridge_y, 'r', linestyle='solid', label='Prediction Y Smoothed')
     plt.legend()
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(1, 1, 1)
-    ax1.plot(t_eval[int(T_train):], predictions_z, linestyle=':', label='Ridge')
-    ax1.plot(t_eval[int(T_train):], z_normalized[int(T_train):], linestyle='--', label= 'target')
-    ax1.plot(t_eval[int(T_train):int(T_train)+len(smoothed_predictions_ridge_z)], smoothed_predictions_ridge_z, 'r', linestyle='solid', label='Ridge Smotthed')
+    ax3 = fig.add_subplot(3, 1, 3)
+    ax3.plot(t_eval[int(T_train):], predictions_z, linestyle=':', label='Prediction Z')
+    ax3.plot(t_eval[int(T_train):], z_normalized[int(T_train):],label= 'Target Z')
+    ax3.plot(t_eval[int(T_train):int(T_train)+len(smoothed_predictions_ridge_z)], smoothed_predictions_ridge_z, 'r', linestyle='solid', label='Prediction Z Smoothed')
     plt.legend()
+    fig.tight_layout()
+    date_of_today = datetime.now().strftime('%Y%m%d_%H%M')
+    fig.savefig(f"curves/nest/lorenz_x_y_z_sr_{spectral_radius}_{date_of_today}.png")
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    fig_3d = plt.figure(figsize=(14, 10))
+    ax = fig_3d.add_subplot(111, projection='3d')
     ax.plot(x_normalized,y_normalized,z_normalized, label= 'target')
     ax.plot(predictions_x, predictions_y, predictions_z, label='prediction')
     ax.plot(smoothed_predictions_ridge, smoothed_predictions_ridge_y, smoothed_predictions_ridge_z, 'r', label='smoothed prediction')
@@ -203,7 +208,5 @@ if __name__ == '__main__':
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
-
-    # ax1.plot(t_eval[int(T_train):], predictions_sigmoid, linestyle=':', label='Sigmoid')
     plt.legend()
     plt.show()
