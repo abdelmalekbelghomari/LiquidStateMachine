@@ -50,8 +50,8 @@ if __name__ == '__main__':
     dt = 0.02  # step width
     num_steps = int(T/dt)
 
-    spectral_radius = 0.90
-    sparsity = 0.1
+    spectral_radius = 1.0
+    sparsity = 0.001
 
     # Lorentz data generation with random initial value        
     # data = generate_lorenz_data(num_steps, dt)
@@ -78,6 +78,8 @@ if __name__ == '__main__':
     reservoir_states_train = lsm_lorenz.get_states(train_U)
     reservoir_states_test = lsm_lorenz.get_states(test_U)
 
+    lsm_lorenz.test_esp(reservoir_states_train)
+
     reservoir_states_train_sinusoid = lsm_sinusoid.get_states(train_U_sinusoid)
     reservoir_states_test_sinusoid = lsm_sinusoid.get_states(train_D_sinusoid)
 
@@ -92,6 +94,10 @@ if __name__ == '__main__':
     # predicting test data
     test_Y = ridge_reg.predict(reservoir_states_test)
     test_Y_sinusoid = ridge_reg_sinusoid.predict(reservoir_states_test_sinusoid)
+
+
+
+    # plot
         
     plt.figure(figsize=(14, 10))
     abscissa = 2000
@@ -115,12 +121,22 @@ if __name__ == '__main__':
     plt.xlabel('Time steps')
     plt.ylabel('Z')
 
-
+    
     
     
     plt.tight_layout()
     date_of_today = datetime.now().strftime('%Y%m%d_%H%M')
-    plt.savefig(f"curves/homemade_x_y_z/time_series_predictions_{date_of_today}.png")
+    plt.savefig(f"curves/homemade_x_y_z/spectral_rad_{spectral_radius}_date_time_{date_of_today}.png")
+
+    plt.figure(figsize=(14, 10))
+    plt.plot(test_Y[:abscissa, 0], label=f'Predicted X (Spectral Radius={spectral_radius})')
+    plt.plot(test_U[:abscissa, 0], label='True X')
+    plt.legend()
+    plt.xlabel('Time steps')
+    plt.ylabel('X')
+    plt.title(f'X Prediction (Spectral Radius={spectral_radius}, Sparse={sparsity})')
+    plt.savefig(f"curves/homemade_x/spectral_rad_{spectral_radius}_sparsity_{sparsity}_date_time_{date_of_today}.png")
+    plt.show()
 
     plt.figure(figsize=(14, 10))
     plt.plot(test_Y_sinusoid, label=f'Predicted Sinusoid (Spectral Radius={spectral_radius})')

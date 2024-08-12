@@ -47,3 +47,20 @@ class LiquidStateMachine:
         for input_vector in inputs:
             states.append(self.step(input_vector))
         return np.array(states)
+    
+    def calculate_lyapunov_exponent(self, states):
+        # Calculate the largest Lyapunov exponent for the given states
+        n = len(states)
+        divergence = np.zeros(n-1)
+        for i in range(1, n):
+            divergence[i-1] = np.linalg.norm(states[i] - states[i-1])
+        divergence = np.log(divergence)
+        return np.mean(divergence)
+
+    def test_esp(self, states):
+        lyapunov_exponent = self.calculate_lyapunov_exponent(states)
+        print(f"Largest Lyapunov Exponent: {lyapunov_exponent}")
+        if lyapunov_exponent < 0:
+            print("ESP is likely satisfied (stable system).")
+        else:
+            print("ESP is likely violated (chaotic system).")

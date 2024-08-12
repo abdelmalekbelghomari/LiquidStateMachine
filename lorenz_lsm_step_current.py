@@ -132,8 +132,8 @@ if __name__ == '__main__':
     z_normalized = scaler.fit_transform(z.reshape(-1, 1)).reshape(-1)
 
     # シミュレート
-    spectral_radius = 1.0
-    model = LSM(n_exc=n_exc, n_inh=n_inh, n_rec=n_rec, spectral_radius=spectral_radius)
+    # spectral_radius = 1.0
+    model = LSM(n_exc=n_exc, n_inh=n_inh, n_rec=n_rec)
 
     num_neurons = len(model.exc_nodes)
     neurons_per_component = num_neurons // 3
@@ -196,7 +196,7 @@ if __name__ == '__main__':
     plt.legend()
     fig.tight_layout()
     date_of_today = datetime.now().strftime('%Y%m%d_%H%M')
-    fig.savefig(f"curves/nest/lorenz_x_y_z_sr_{spectral_radius}_{date_of_today}.png")
+    fig.savefig(f"curves/nest/lorenz_x_y_z_{date_of_today}.png")
 
     fig_3d = plt.figure(figsize=(14, 10))
     ax = fig_3d.add_subplot(111, projection='3d')
