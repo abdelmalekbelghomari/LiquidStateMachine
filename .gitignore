@@ -10,4 +10,4 @@ __pycache__
 /*.egg
 
 # CSV files containing the spike generation 
-./spike_binary.csv
+/spike_binary.csv
