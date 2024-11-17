@@ -97,7 +97,14 @@ if __name__ == '__main__':
 
 
 
-    # plot
+    accuracy = np.abs(test_Y[:, 0] - test_U[:, 0]) < 1  # Element-wise condition
+    nb_points = len(test_Y[:, 0])
+    nb_true = np.sum(accuracy)  # Sum of True values (True is 1, False is 0)
+    accuracy_result = nb_true / nb_points * 100  # Accuracy as a percentage
+    print(f"Accuracy over 100: {accuracy_result:.2f}%")
+
+    mse = np.mean((test_Y - test_U) ** 2)
+    print(f"Mean Squared Error: {mse:.2f}")
         
     plt.figure(figsize=(14, 10))
     abscissa = 2000
