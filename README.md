@@ -1,6 +1,7 @@
 # Liquid State Machine (LSM)
 
 The code have been inspired from the [LSM Repo][3] made by the researchers from Graz University
+
 [3]: https://github.com/IGITUGraz/LSM
 
 The Liquid State Machine (LSM) ([Maass et. al. 2002][1]) is a computational model
