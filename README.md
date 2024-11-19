@@ -1,6 +1,6 @@
 # Liquid State Machine (LSM)
 
-### The code have been inspired from the [LSM Repo][https://github.com/IGITUGraz/LSM] made by the researchers from Graz University
+The code have been inspired from the [LSM Repo][https://github.com/IGITUGraz/LSM] made by the researchers from Graz University
 
 The Liquid State Machine (LSM) ([Maass et. al. 2002][1]) is a computational model
 which uses the high-dimensional, complex dynamics of recurrent neural circuits to
